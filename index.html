@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/>
+
+    <title>Legacy Viewer</title>
+
+    <script id="sap-ui-bootstrap"
+            src="resources/sap-ui-core.js"
+            data-sap-ui-theme="sap_bluecrystal"
+            data-sap-ui-libs="sap.m, sap.ui.layout">
+    </script>
+    <script>
+        sap.ui.getCore().attachInit(function() {
+
+            function getParameterByName(name) {
+                name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+                var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+                        results = regex.exec(location.search);
+                return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+            }
+
+            jQuery.sap.declare('convergent.iframe');
+
+            sap.ui.core.Control.extend('convergent.iframe', {
+                metadata: {
+                    properties: {
+                        src: {type: 'string'}
+                    },
+                    events: {}
+                },
+                renderer: function (oRm, oControl) {
+                    oRm.write('<iframe id="legacyViewer" src="' + oControl.getSrc() + '?sap-ie=Edge" frameBorder="0"></iframe>');
+                }
+            });
+
+
+            var Page = new sap.m.Page('S1', {
+                title: getParameterByName('title'),
+                showNavButton: true,
+                navButtonPress: function () {
+                    top.window.location.href = '/sap/bc/ui5_ui5/ui2/ushell/shells/abap/Fiorilaunchpad.html';
+                },
+                content: new convergent.iframe({
+                    src: getParameterByName('url')
+                })
+            });
+
+            if (sap.ui.Device.system.phone) {
+                Page.setSubHeader(new sap.m.Bar({
+                    contentMiddle: new sap.m.Text({
+                        text: 'This page may not look right on smaller screens.'
+                    })
+                }));
+            }
+
+            new sap.m.App({
+                initialPage: 'S1',
+                pages: [
+                    Page
+                ]
+            }).placeAt('content');
+
+        });
+    </script>
+    <style>
+        #S1-scroll {
+            height: 100%;
+        }
+        .sapMPageHeader::before {
+            border-top: 0;
+        }
+        #legacyViewer {
+            display: block;
+            width: 100%;
+            height: 100%;
+            min-height: 100%;
+            min-width: 100%;
+            margin-bottom: -8px;
+            border: 0px none transparent !important;
+        }
+    </style>
+</head>
+<body id="content" class="sapUiBody sapUShellFullHeight" role="application"></body>
+</html>
