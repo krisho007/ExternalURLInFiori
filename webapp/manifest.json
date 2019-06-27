@@ -2,14 +2,12 @@
 	"_version": "1.1.0",
 	"sap.app": {
 		"_version": "1.1.0",
-		"id": "legacy.viewer",
+		"id": "legacyViewer",
 		"type": "application",
 		"i18n": "i18n/i18n.properties",
 		"applicationVersion": {
 			"version": "1.0.0"
-		},
-		"title": "{{appTitle}}",
-		"description": "{{appDescription}}"
+		}
 	},
 	"sap.ui": {
 		"fullWidth": true,
@@ -37,6 +35,11 @@
 				"sap.ui.core": {},
 				"sap.m": {},
 				"sap.ui.layout": {}
+			}
+		},
+		"services": {
+			"ShellUIService": {
+				"factoryName": "sap.ushell.ui5service.ShellUIService"
 			}
 		},
 		"contentDensities": {

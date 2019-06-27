@@ -20,5 +20,8 @@ function getExternalUrl() {
 function getApplicationTitle() {
 	var q = location.hash.split("?url=")[1];
 	var k = q.split("&title=")[1];
-	return k;
+	if (k === "" || k === undefined){
+		return "Legacy Viewer";
+	}
+	return decodeURI(k);
 }
