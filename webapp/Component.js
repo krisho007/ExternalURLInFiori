@@ -110,7 +110,7 @@ sap.ui.define([
 					}),
 				});
 
-				this.oDialog.open();
+				this.oDialog.open(); 
 
 			}
 
