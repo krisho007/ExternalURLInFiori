@@ -20,8 +20,16 @@ function getExternalUrl() {
 function getApplicationTitle() {
 	var q = location.hash.split("?url=")[1];
 	var k = q.split("&title=")[1];
-	if (k === "" || k === undefined){
+	var j = k.split("&hasCompanyContext")[0];
+	if (j === "" || j === undefined){
 		return "Legacy Viewer";
 	}
-	return decodeURI(k);
+	return decodeURI(j);
+}
+
+function getCompanyContextFlag(){
+	var q = location.hash.split("?url=")[1];
+	var k = q.split("&title=")[1];
+	var j = k.split("&hasCompanyContext=")[1];	
+	return (j === "true"); //String to boolean
 }
