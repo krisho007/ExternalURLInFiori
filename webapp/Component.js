@@ -24,15 +24,18 @@ sap.ui.define([
 				selectedCompanyKey: "",
 				selectedFacilityKey: ""
 			});
-
+			
+			//SAPUI5 already has https://github.com/medialize/URI.js in it. So using this library to read URL parameters
+			var currentURI = new URI(location.hash.substr(1));
+			
 			jQuery.getJSON("/sap/opu/odata/sap/ZFIORI_LEGACY_VIEWER_SRV/Summary", function (data) {
-				$("#legacyViewer")[0].src = data.d.BackendHost + getExternalUrl();
+				$("#legacyViewer")[0].src = data.d.BackendHost + currentURI.query(true)["url"];
 			});
 
 			//Update the app title dynamically
 			this.getService("ShellUIService").then( // promise is returned
 				function (oService) {
-					var sTitle = getApplicationTitle();
+					var sTitle = currentURI.query(true)["title"];
 					oService.setTitle(sTitle);
 				}.bind(this),
 				function (oError) {
@@ -55,7 +58,7 @@ sap.ui.define([
 				}
 			});
 
-			var hasCompanyContext = getCompanyContextFlag();
+			var hasCompanyContext = ( currentURI.query(true)["hasCompanyContext"] === "true");
 			var oPage = new Page({
 				showHeader: hasCompanyContext,
 				content: new convergent.iframe()
@@ -99,7 +102,7 @@ sap.ui.define([
 				//Popup to choose company and facility
 				this.oDialog = new Dialog({
 					title: "Choose Company and Facility",
-					content: [companyLabel.clone().addStyleClass("sapUiMediumMarginBegin"), this.companyDD.clone().addStyleClass(
+					content: [companyLabel.clone().addStyleClass("sapUiTinyMarginBegin"), this.companyDD.clone().addStyleClass(
 						"sapUiTinyMarginBegin"), facilityLabel.clone().addStyleClass("sapUiMediumMarginBegin"), this.facilityDD.clone().addStyleClass(
 						"sapUiTinyMarginBegin").addStyleClass("sapUiSmallMarginEnd")],
 					endButton: new Button({
@@ -107,11 +110,9 @@ sap.ui.define([
 						press: function () {
 							this.getParent().oDialog.close();
 						}
-					}),
+					})
 				});
-
-				this.oDialog.open(); 
-
+				this.oDialog.open();
 			}
 
 			if (sap.ui.Device.system.phone) {
@@ -128,12 +129,24 @@ sap.ui.define([
 				]
 			});
 		},
-		filterFacilities: function () {
+		filterFacilities: function (evt) {
 			//Set Binding context of facilities
-
+			var facilityComboBox = evt.getSource().getParent().getContent()[1];
+			var currentSelectedBindingContext = evt.getSource().getSelectedItem().getBindingContext();
+			facilityComboBox.setBindingContext(currentSelectedBindingContext);
 		},
-		updateContext: function () {
-
+		updateContext: function (evt) {
+			//Legacy app context needs to be updated
+			//SAPUI5 already has https://github.com/medialize/URI.js in it. So using this library to change URL parameters
+			var iframeUrl = $("#legacyViewer")[0].attr("src");
+			var localModel = this.getModel("localData");
+			var currentCompany = localModel.getProperty("/selectedCompanyKey");
+			var currentFacility = localModel.getProperty("/selectedFacilityKey");
+			iframeUrl.setQuery("company", currentCompany);
+			iframeUrl.setQuery("facility", currentFacility);
+			
+			//Set the URL back to iframe
+			$("#legacyViewer")[0].attr("src", iframeUrl);
 		}
 	});
 });
