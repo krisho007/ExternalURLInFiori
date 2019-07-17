@@ -66,45 +66,21 @@ sap.ui.define([
 
 			//Add a company context if required
 			if (hasCompanyContext) {
-				var dropdownTemplate = new ListItem({
-					key: "{id}",
-					text: "{name}"
-				});
-				var companyLabel = new Label({
-					text: "Company"
-				});
-				var facilityLabel = new Label({
-					text: "Facility"
-				});
-				this.companyDD = new ComboBox({
-					"items": {
-						"path": "/Companies",
-						"template": dropdownTemplate
-					},
-					"selectedKey": "{localModel>/selectedCompanyKey}",
-					"press": this.filterFacilities
-				});
-
-				this.facilityDD = new ComboBox({
-					"items": {
-						"path": "Facilities",
-						"template": dropdownTemplate
-					},
-					"selectedKey": "{localModel>/selectedFacilityKey}",
-					"press": this.updateContext
-				});
+				var headerContent = sap.ui.xmlfragment("legacyViewer.ContextFragment");
+				headerContent.addStyleClass("sapUiMediumMarginBegin");
 				var headerToolbar = new Toolbar({
-					content: [companyLabel, this.companyDD, facilityLabel, this.facilityDD]
+					content: headerContent
 				});
 
 				oPage.setCustomHeader(headerToolbar);
 
 				//Popup to choose company and facility
+				var dialogContent = sap.ui.xmlfragment("legacyViewer.ContextFragment");
+				dialogContent.addStyleClass("sapUiMediumMarginBegin");
 				this.oDialog = new Dialog({
+					
 					title: "Choose Company and Facility",
-					content: [companyLabel.clone().addStyleClass("sapUiTinyMarginBegin"), this.companyDD.clone().addStyleClass(
-						"sapUiTinyMarginBegin"), facilityLabel.clone().addStyleClass("sapUiMediumMarginBegin"), this.facilityDD.clone().addStyleClass(
-						"sapUiTinyMarginBegin").addStyleClass("sapUiSmallMarginEnd")],
+					content: dialogContent,
 					endButton: new Button({
 						text: "OK",
 						press: function () {
@@ -112,7 +88,8 @@ sap.ui.define([
 						}
 					})
 				});
-				this.oDialog.open();
+				// this.getView().addDependent(this.oDialog);
+				// this.oDialog.open();
 			}
 
 			if (sap.ui.Device.system.phone) {

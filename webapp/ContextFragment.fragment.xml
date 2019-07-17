@@ -1,0 +1,12 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:l="sap.ui.layout">
+	<l:HorizontalLayout class="sapUiContentPadding">
+		<Label text="Company"/>
+		<ComboBox items="{ path: 'CompanyContext>/Companies' }">
+			<core:Item key="{CompanyContext>CompanyID}" text="{CompanyContext>CompanyName}"/>
+		</ComboBox>
+		<Label text="Facility"/>
+		<ComboBox items="{ path: 'CompanyContext>Facilities' }">
+			<core:Item key="{CompanyContext>FacilityID}" text="{CompanyContext>FacilityName}"/>
+		</ComboBox>
+	</l:HorizontalLayout>
+</core:FragmentDefinition>

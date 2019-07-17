@@ -1,0 +1,22 @@
+<edmx:Edmx xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx"
+	xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns:sap="http://www.sap.com/Protocols/SAPData" Version="1.0">
+	<edmx:DataServices m:DataServiceVersion="2.0">
+		<Schema xmlns="http://schemas.microsoft.com/ado/2008/09/edm" Namespace="Z_NEW_CS_COMMON_SRV" xml:lang="en" sap:schema-version="1">
+			<EntityType Name="Company" sap:content-version="1">
+				<Key><PropertyRef Name="CompanyID"/></Key><Property Name="CompanyID" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false"
+					sap:sortable="false" sap:filterable="false"/><Property Name="CompanyName" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false"
+					sap:sortable="false" sap:filterable="false"/><NavigationProperty Name="Facilities" Relationship="Z_NEW_CS_COMMON_SRV.CompanyToFacilities" FromRole="FromRole_CompanyToFacilities"
+					ToRole="ToRole_CompanyToFacilities"/></EntityType>
+			<EntityType Name="Facility" sap:content-version="1">
+				<Key><PropertyRef Name="FacilityID"/></Key><Property Name="FacilityID" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false"
+					sap:sortable="false" sap:filterable="false"/><Property Name="FacilityName" Type="Edm.String" Nullable="false" sap:unicode="false" sap:creatable="false" sap:updatable="false"
+					sap:sortable="false" sap:filterable="false"/></EntityType>
+			<Association Name="CompanyToFacilities" sap:content-version="1"><End Type="Z_NEW_CS_COMMON_SRV.Company" Multiplicity="1" Role="FromRole_CompanyToFacilities"/><End Type="Z_NEW_CS_COMMON_SRV.Facility" Multiplicity="*" Role="ToRole_CompanyToFacilities"/></Association>
+			<EntityContainer Name="Z_NEW_CS_COMMON_SRV_Entities" m:IsDefaultEntityContainer="true" sap:supported-formats="atom json xlsx"><EntitySet Name="Companies" EntityType="Z_NEW_CS_COMMON_SRV.Company" sap:creatable="false" sap:updatable="false" sap:deletable="false"
+				sap:pageable="false" sap:addressable="false" sap:content-version="1"/><EntitySet Name="Facilities" EntityType="Z_NEW_CS_COMMON_SRV.Facility" sap:creatable="false" sap:updatable="false" sap:deletable="false"
+				sap:pageable="false" sap:addressable="false" sap:content-version="1"/>
+				<AssociationSet Name="CompanyToFacilitiesSet" Association="Z_NEW_CS_COMMON_SRV.CompanyToFacilities" sap:creatable="false"
+					sap:updatable="false" sap:deletable="false" sap:content-version="1"><End EntitySet="Companies" Role="FromRole_CompanyToFacilities"/><End EntitySet="Facilities" Role="ToRole_CompanyToFacilities"/></AssociationSet>
+			</EntityContainer><atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="self" href="./sap/Z_NEW_CS_COMMON_SRV/$metadata"/><atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="latest-version" href="./sap/Z_NEW_CS_COMMON_SRV/$metadata"/></Schema>
+	</edmx:DataServices>
+</edmx:Edmx>

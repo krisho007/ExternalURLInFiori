@@ -7,6 +7,19 @@
 		"i18n": "i18n/i18n.properties",
 		"applicationVersion": {
 			"version": "1.0.0"
+		},
+		"dataSources": {
+			"Z_NEW_CS_COMMON_SRV": {
+				"uri": "/sap/opu/odata/sap/Z_NEW_CS_COMMON_SRV/",
+				"type": "OData",
+				"settings": {
+					"localUri": "localService/metadata.xml"
+				}
+			}
+		},
+		"sourceTemplate": {
+			"id": "servicecatalog.connectivityComponentForManifest",
+			"version": "0.0.0"
 		}
 	},
 	"sap.ui": {
@@ -51,13 +64,23 @@
 			"i18n": {
 				"type": "sap.ui.model.resource.ResourceModel",
 				"settings": {
-					"bundleName": "tile11.comparison.i18n.i18n"
+					"bundleName": "legacyViewer.i18n.i18n"
 				}
 			},
 			"localData": {
 				"type": "sap.ui.model.json.JSONModel",
 				"settings": {},
 				"preload": false
+			},
+			"CompanyContext": {
+				"type": "sap.ui.model.odata.v2.ODataModel",
+				"settings": {
+					"defaultOperationMode": "Server",
+					"defaultBindingMode": "OneWay",
+					"defaultCountMode": "Request"
+				},
+				"dataSource": "Z_NEW_CS_COMMON_SRV",
+				"preload": true
 			}
 		},
 		"resources": {

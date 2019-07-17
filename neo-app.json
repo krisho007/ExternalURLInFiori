@@ -5,10 +5,10 @@
       "path": "/sap/opu/odata",
       "target": {
         "type": "destination",
-        "name": "GWD",
+        "name": "GD2",
         "entryPath": "/sap/opu/odata"
       },
-      "description": "GWD"
+      "description": "GD2 NWGW DMZ Development"
     },
     {
       "path": "/sap/bc/ui5_ui5",
