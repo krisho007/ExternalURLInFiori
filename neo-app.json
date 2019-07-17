@@ -1,5 +1,5 @@
 {
-  "welcomeFile": "index.html",
+  "welcomeFile": "/webapp/index.html",
   "routes": [
     {
       "path": "/sap/opu/odata",
@@ -14,17 +14,58 @@
       "path": "/sap/bc/ui5_ui5",
       "target": {
         "type": "destination",
-        "name": "GWD",
+        "name": "GD2",
         "entryPath": "/sap/bc/ui5_ui5"
       },
-      "description": "GWD"
+      "description": "GD2 NWGW DMZ Development"
+    },
+    {
+      "path": "/webapp/resources",
+      "target": {
+        "type": "service",
+        "name": "sapui5",
+        "entryPath": "/resources",
+        "version": "1.60.10"
+      },
+      "description": "SAPUI5 Resources"
+    },
+    {
+      "path": "/webapp/test-resources",
+      "target": {
+        "type": "service",
+        "name": "sapui5",
+        "entryPath": "/test-resources",
+        "version": "1.60.10"
+      },
+      "description": "SAPUI5 Test Resources"
+    },
+    {
+      "path": "/dist/resources",
+      "target": {
+        "type": "service",
+        "name": "sapui5",
+        "entryPath": "/resources",
+        "version": "1.60.10"
+      },
+      "description": "SAPUI5 Resources"
+    },
+    {
+      "path": "/dist/test-resources",
+      "target": {
+        "type": "service",
+        "name": "sapui5",
+        "entryPath": "/test-resources",
+        "version": "1.60.10"
+      },
+      "description": "SAPUI5 Test Resources"
     },
     {
       "path": "/resources",
       "target": {
         "type": "service",
         "name": "sapui5",
-        "entryPath": "/resources"
+        "entryPath": "/resources",
+        "version": "1.60.10"
       },
       "description": "SAPUI5 Resources"
     },
@@ -33,9 +74,11 @@
       "target": {
         "type": "service",
         "name": "sapui5",
-        "entryPath": "/test-resources"
+        "entryPath": "/test-resources",
+        "version": "1.60.10"
       },
       "description": "SAPUI5 Test Resources"
     }
-  ]
+  ],
+  "sendWelcomeFileRedirect": true
 }
