@@ -11,8 +11,9 @@ sap.ui.define([
 	"sap/m/Label",
 	"sap/m/Dialog",
 	"sap/m/Button",
+	"sap/m/ToolbarSpacer",
 	"sap/ui/core/Fragment"
-], function (UIComponent, App, Page, Bar, Text, Control, Toolbar, ComboBox, ListItem, Label, Dialog, Button, Fragment) {
+], function (UIComponent, App, Page, Bar, Text, Control, Toolbar, ComboBox, ListItem, Label, Dialog, Button, ToolbarSpacer, Fragment) {
 	"use strict";
 	return UIComponent.extend("legacyViewer.Component", {
 		metadata: {
@@ -30,7 +31,7 @@ sap.ui.define([
 			var currentURI = new URI(location.hash.substr(1));
 
 			jQuery.getJSON("/sap/opu/odata/sap/ZFIORI_LEGACY_VIEWER_SRV/Summary", function (data) {
-				$("#legacyViewer")[0].src = data.d.BackendHost + currentURI.query(true)["url"];
+				$("#legacyViewer").attr("src", data.d.BackendHost + location.hash.substr(1).split("url=")[1]);
 			});
 
 			//Update the app title dynamically
@@ -55,7 +56,7 @@ sap.ui.define([
 					events: {}
 				},
 				renderer: function (oRm, oControl) {
-					oRm.write('<iframe id="legacyViewer" frameBorder="0"></iframe>');
+					oRm.write('<iframe id="legacyViewer" frameBorder="0" ></iframe>');
 				}
 			});
 
@@ -73,16 +74,17 @@ sap.ui.define([
 				}).then(function (headerContent) {
 					headerContent.addStyleClass("sapUiMediumMarginBegin");
 					var headerToolbar = new Toolbar({
-						content: headerContent
+						content: [new ToolbarSpacer(), headerContent]
 					});
 					this.setCustomHeader(headerToolbar);
 				}.bind(oPage));
 
+				//TODO Read default company and facility
+
 				// Popup to choose company and facility
 				// var dialogContent = sap.ui.xmlfragment("legacyViewer.ContextFragment", this);
 				// dialogContent.addStyleClass("sapUiMediumMarginBegin");
-				
-				
+
 				// this.oDialog = new Dialog({
 
 				// 	title: "Choose Company and Facility",
@@ -115,13 +117,14 @@ sap.ui.define([
 		filterFacilities: function (evt) {
 			//Set Binding context of facilities
 			var facilityComboBox = evt.getSource().getParent().getContent()[3];
-			var currentSelectedBindingContext = evt.getSource().getParent().getContent()[1].getSelectedItem().getBindingContext("CompanyContext");
+			var currentSelectedBindingContext = evt.getSource().getParent().getContent()[1].getSelectedItem().getBindingContext(
+				"CompanyContext");
 			facilityComboBox.setBindingContext(currentSelectedBindingContext, "CompanyContext");
 		},
 		updateContext: function (evt) {
 			//Legacy app context needs to be updated
 			//SAPUI5 already has https://github.com/medialize/URI.js in it. So using this library to change URL parameters
-			var iframeUrl = $("#legacyViewer")[0].attr("src");
+			var iframeUrl = $("#legacyViewer").attr("src");
 			var localModel = this.getModel("localData");
 			var currentCompany = localModel.getProperty("/selectedCompanyKey");
 			var currentFacility = localModel.getProperty("/selectedFacilityKey");
@@ -129,7 +132,7 @@ sap.ui.define([
 			iframeUrl.setQuery("facility", currentFacility);
 
 			//Set the URL back to iframe
-			$("#legacyViewer")[0].attr("src", iframeUrl);
+			$("#legacyViewer").attr("src", iframeUrl);
 		}
 	});
 });
