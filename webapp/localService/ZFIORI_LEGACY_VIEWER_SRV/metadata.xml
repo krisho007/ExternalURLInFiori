@@ -1,0 +1,17 @@
+<edmx:Edmx xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx"
+	xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns:sap="http://www.sap.com/Protocols/SAPData" Version="1.0">
+	<edmx:DataServices m:DataServiceVersion="2.0">
+		<Schema xmlns="http://schemas.microsoft.com/ado/2008/09/edm" Namespace="ZFIORI_LEGACY_VIEWER_SRV" xml:lang="en" sap:schema-version="1">
+			<EntityType Name="Summary" sap:content-version="1">
+				<Key><PropertyRef Name="ApplicationId"/></Key><Property Name="ApplicationId" Type="Edm.String" Nullable="false" MaxLength="32" sap:unicode="false" sap:creatable="false"
+					sap:updatable="false" sap:sortable="false" sap:filterable="false"/><Property Name="ApplicationURL" Type="Edm.String" Nullable="false" MaxLength="1250" sap:unicode="false" sap:creatable="false"
+					sap:updatable="false" sap:sortable="false" sap:filterable="false"/><Property Name="Title" Type="Edm.String" Nullable="false" MaxLength="255" sap:unicode="false" sap:creatable="false" sap:updatable="false"
+					sap:sortable="false" sap:filterable="false"/><Property Name="CompanyURLParameterName" Type="Edm.String" Nullable="false" MaxLength="80" sap:unicode="false" sap:creatable="false"
+					sap:updatable="false" sap:sortable="false" sap:filterable="false"/><Property Name="FacilityURLParameterName" Type="Edm.String" Nullable="false" MaxLength="80" sap:unicode="false" sap:creatable="false"
+					sap:updatable="false" sap:sortable="false" sap:filterable="false"/></EntityType>
+			<EntityContainer Name="ZFIORI_LEGACY_VIEWER_SRV_Entities" m:IsDefaultEntityContainer="true" sap:supported-formats="atom json xlsx"><EntitySet Name="SummaryCollection" EntityType="ZFIORI_LEGACY_VIEWER_SRV.Summary" sap:content-version="1"/>
+				<FunctionImport Name="Summary" ReturnType="ZFIORI_LEGACY_VIEWER_SRV.Summary" EntitySet="SummaryCollection" m:HttpMethod="GET"
+					sap:label="Get Summary" sap:action-for="ZFIORI_LEGACY_VIEWER_SRV.Summary"><Parameter Name="ApplicationId" Type="Edm.String" Mode="In"/></FunctionImport>
+			</EntityContainer><atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="self" href="./sap/ZFIORI_LEGACY_VIEWER_SRV/$metadata"/><atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="latest-version" href="./sap/ZFIORI_LEGACY_VIEWER_SRV/$metadata"/></Schema>
+	</edmx:DataServices>
+</edmx:Edmx>

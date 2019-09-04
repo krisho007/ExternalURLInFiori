@@ -9,11 +9,18 @@
 			"version": "1.0.0"
 		},
 		"dataSources": {
-			"Z_NEW_CS_COMMON_SRV": {
-				"uri": "/sap/opu/odata/sap/Z_NEW_CS_COMMON_SRV/",
+			"ZCRM_CS_COMMON_SRV": {
+				"uri": "/sap/opu/odata/sap/ZCRM_CS_COMMON_SRV/",
 				"type": "OData",
 				"settings": {
 					"localUri": "localService/metadata.xml"
+				}
+			},
+			"ZFIORI_LEGACY_VIEWER_SRV": {
+				"uri": "/sap/opu/odata/sap/ZFIORI_LEGACY_VIEWER_SRV/",
+				"type": "OData",
+				"settings": {
+					"localUri": "localService/ZFIORI_LEGACY_VIEWER_SRV/metadata.xml"
 				}
 			}
 		},
@@ -79,7 +86,17 @@
 					"defaultBindingMode": "OneWay",
 					"defaultCountMode": "Request"
 				},
-				"dataSource": "Z_NEW_CS_COMMON_SRV",
+				"dataSource": "ZCRM_CS_COMMON_SRV",
+				"preload": true
+			},
+			"LegacyApplicationDetail": {
+				"type": "sap.ui.model.odata.v2.ODataModel",
+				"settings": {
+					"defaultOperationMode": "Server",
+					"defaultBindingMode": "OneWay",
+					"defaultCountMode": "Request"
+				},
+				"dataSource": "ZFIORI_LEGACY_VIEWER_SRV",
 				"preload": true
 			}
 		},
