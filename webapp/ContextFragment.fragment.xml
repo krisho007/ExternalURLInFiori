@@ -4,8 +4,8 @@
 		<ComboBox id="companyComboBoxID" items="{ path: 'CompanyContext>/Companies' }" selectedKey="{localData>/selectedCompanyKey}" selectionChange="filterFacilities">
 			<core:Item key="{CompanyContext>CompanyID}" text="{CompanyContext>CompanyName}"/>
 		</ComboBox>
-		<Label text="Facility"/>
-		<ComboBox id="facilityComboBoxID" items="{ path: 'CompanyContext>Facilities' }" selectedKey="{localData>/selectedFacilityKey}">
+		<Label text="Facility" visible="{localData>/showFacility}"/>
+		<ComboBox id="facilityComboBoxID" items="{ path: 'CompanyContext>Facilities' }" selectedKey="{localData>/selectedFacilityKey}" visible="{localData>/showFacility}">
 			<core:Item key="{CompanyContext>FacilityID}" text="{CompanyContext>FacilityName}"/>
 		</ComboBox>
 		<Button text="Go" press="updateContext" type="Accept"/>

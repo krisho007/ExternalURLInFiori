@@ -23,14 +23,35 @@ sap.ui.define([
 			UIComponent.prototype.init.apply(this, arguments);
 			this.setShellTitle();
 			this.readAllData();
+
 			//JSON Model to store local data
 			this.localModel = this.getModel("localData");
 			this.localModel.setData({
 				selectedCompanyKey: "",
 				selectedFacilityKey: ""
 			});
+			this.resourceBundle = this.getModel("i18n").getResourceBundle();
+			if (this.hasCompanyContext) {
+				this.metadataFailed("CompanyContext").then(function (error) {
+					this.handleError(this.resourceBundle.getText("CompanyContextServiceFailed"));
+				}.bind(this));
+			}
+			this.metadataFailed("LegacyApplicationDetail").then(function (error) {
+				this.handleError(this.resourceBundle.getText("CompanyContextServiceFailed"));
+			}.bind(this));
+		},
+		metadataFailed: function (modelName) {
+			var myODataModel = this.getModel(modelName); // from the descriptor
+			var failedAlready = myODataModel.isMetadataLoadingFailed();
+			return failedAlready ? Promise.resolve() : new Promise(resolve => {
+				myODataModel.attachEventOnce("metadataFailed", resolve);
+			});
 		},
 		createContent: function () {
+			//SAPUI5 already has https://github.com/medialize/URI.js in it. So using this library to read URL parameters
+			var currentURI = new URI(location.hash.substr(1));
+			this.hasCompanyContext = (currentURI.query(true)["HasCompanyContext"] === "true");
+
 			//Custom iFrame rendering control
 			Control.extend("convergent.iframe", {
 				metadata: {
@@ -46,9 +67,7 @@ sap.ui.define([
 					oRm.write('<iframe id="legacyViewer" frameBorder="0" ></iframe>');
 				}
 			});
-			//SAPUI5 already has https://github.com/medialize/URI.js in it. So using this library to read URL parameters
-			var currentURI = new URI(location.hash.substr(1));
-			this.hasCompanyContext = (currentURI.query(true)["HasCompanyContext"] === "true");
+
 			var oPage = new Page({
 				showHeader: this.hasCompanyContext,
 				content: new convergent.iframe()
@@ -96,13 +115,14 @@ sap.ui.define([
 				}),
 				afterClose: function () {
 					dialog.destroy();
-					//Navigate to FLP
-					var oCrossAppNav = sap.ushell.Container.getService("CrossApplicationNavigation");
-					oCrossAppNav.hrefForExternal({
-						target: {
-							shellHash: "#"
-						}
-					});
+					//Navigate to FLP - NOT WORKING
+					// var oCrossAppNav = sap.ushell.Container.getService("CrossApplicationNavigation");
+					// oCrossAppNav.hrefForExternal({
+					// 	target: {
+					// 		shellHash: "#"
+					// 	}
+					// });
+					location.hash = "#Shell-home";
 				}
 			});
 			dialog.open();
@@ -134,7 +154,13 @@ sap.ui.define([
 			var defaultFacilityID = jQuery.sap.storage.Storage.get("DefaultFacilityID");
 			var defaultSAPCompanyID = jQuery.sap.storage.Storage.get("DefaultSAPCompanyID");
 			var defaultSAPFacilityID = jQuery.sap.storage.Storage.get("DefaultSAPFacilityID");
-			if (defaultCompanyID && defaultCompanyID !== "") {
+			var defaultSettingsForUser = jQuery.sap.storage.Storage.get("CurrentUser");
+			var currentUser = sap.ushell.Container.getUser().getId();
+			if (defaultCompanyID && defaultCompanyID !== "" && currentUser === defaultSettingsForUser) {
+				//If facility id is not available, this is a intermodal user which does not need facility. Hide facility
+				if (!defaultFacilityID){
+					this.getModel("localData").setProperty("/showFacility", false);
+				}
 				return { //Company context was already fetched
 					"CompanyID": defaultCompanyID,
 					"FacilityID": defaultFacilityID,
@@ -142,7 +168,6 @@ sap.ui.define([
 					"SAPFacilityID": defaultSAPFacilityID
 				};
 			}
-
 			return this.getCRMDefaults();
 		},
 		getCRMDefaults: function () {
@@ -150,8 +175,12 @@ sap.ui.define([
 				function (resolve, reject) {
 					this.getModel("CompanyContext").read("/UserDefaults('')", {
 						success: function (oData) {
-							if (!oData.CompanySearchTerm1 || !oData.CMFLocationID) {
+							if (!oData.CompanySearchTerm1) {
 								reject("Technical error: Failed to fetch the default company context from CRM");
+							}
+							if (!oData.CMFLocationID){
+								//If facility id is not available, this is a intermodal user which does not need facility. Hide facility
+								this.getModel("localData").setProperty("/showFacility", false);
 							}
 							resolve(this.getLegacyValues(oData).then(this.updateLocalData));
 						}.bind(this),
@@ -166,28 +195,31 @@ sap.ui.define([
 			jQuery.sap.storage.Storage.put("DefaultFacilityID", data.FacilityID);
 			jQuery.sap.storage.Storage.put("DefaultSAPCompanyID", this.SAPCompanyID);
 			jQuery.sap.storage.Storage.put("DefaultSAPFacilityID", this.SAPFacilityID);
+			jQuery.sap.storage.Storage.put("CurrentUser", sap.ushell.Container.getUser().getId());			
 		},
 		getLegacyValues: function (oData) {
 			return new Promise(
 				function (resolve, reject) {
+					var data = {};
+					
+					//URL parameters
+					data["chopCode"] = oData.CompanySearchTerm1;
+					if (oData.CMFLocationID){
+						data["cmfFacilityId"] = oData.CMFLocationID;
+					}
+					
+					//Call legacy
 					$.ajax({
 							url: "/cpcustomerstation/company/getCompanyFacilitySADBData",
 							method: "GET",
-							data: {
-								chopCode: oData.CompanySearchTerm1,
-								cmfFacilityId: oData.CMFLocationID
-							}
+							data: data
 						})
 						.done(function (data) {
-							// jQuery.sap.storage.Storage.put("DefaultCompanyID", data.company.id);
-							// jQuery.sap.storage.Storage.put("DefaultFacilityID", data.facility.id);
-							// jQuery.sap.storage.Storage.put("DefaultSAPCompanyID", this.CompanyID);
-							// jQuery.sap.storage.Storage.put("DefaultSAPFacilityID", this.FacilityID);
 							resolve({
 								"CompanyID": data.company.id,
-								"FacilityID": data.facility.id,
+								"FacilityID": (data.facility === null ? null : data.facility.id),
 								"SAPCompanyID": this.CompanyID,
-								"SAPFacilityID": this.CompanyID
+								"SAPFacilityID": this.FacilityID
 							});
 						}.bind(oData))
 						.fail(function (error) {
@@ -198,13 +230,49 @@ sap.ui.define([
 		updateIframe: function (values) {
 			this.oDefaultData = values[0];
 			this.oLegacyAppDetail = values[1];
+			var showFacility = false;
+			if (this.oLegacyAppDetail.ApplicationURL.search("vinmanagement") > -1) {
+				this.getLiveSide().then(this.updateIframeWithVINUrl.bind(this));
+				return;
+			}
+			if (this.oLegacyAppDetail.FacilityURLParameterName !== "" && this.oDefaultData.FacilityID) {
+				showFacility = true;
+			}
 			if (this.hasCompanyContext) {
-				this.updateModel(this.oDefaultData.SAPCompanyID, this.oDefaultData.SAPFacilityID);
+				this.updateModel(this.oDefaultData.SAPCompanyID, this.oDefaultData.SAPFacilityID, showFacility);
 				this.filterFacilities();
 			}
-			this.updateURL(this.oDefaultData.CompanyID, this.oDefaultData.FacilityID, this.oLegacyAppDetail.CompanyURLParameterName, this
-				.oLegacyAppDetail
-				.FacilityURLParameterName, this.oLegacyAppDetail.ApplicationURL);
+			this.updateURL(this.oDefaultData.CompanyID, this.oDefaultData.FacilityID,
+				this.oLegacyAppDetail.CompanyURLParameterName, this.oLegacyAppDetail.FacilityURLParameterName,
+				this.oLegacyAppDetail.ApplicationURL);
+		},
+		getLiveSide: function () {
+			return new Promise(function (resolve, reject) {
+				$.ajax({
+						url: "/cpcustomerstation/util/getLiveSide",
+						method: "GET"
+					})
+					.done(function (data) {
+						resolve(data.side);
+					})
+					.fail(function (error) {
+						reject("Technical error: Failed to fetch the legacy company context from CS");
+					});;
+			});
+		},
+		updateIframeWithVINUrl: function (data) {
+			var URL = this.oLegacyAppDetail.ApplicationURL;
+			URL = URL.replace("$companyId", this.oDefaultData.CompanyID);
+			URL = URL.replace("$server", data);
+			var iframe = $("#legacyViewer");
+			this.updateModel(this.oDefaultData.SAPCompanyID, null, false);
+			// Loading indicator for iframe
+			iframe.addClass("loadingIframe");
+			//Set the URL back to iframe
+			iframe.attr("src", URL);
+			iframe.on("load", function () {
+				iframe.removeClass("loadingIframe");
+			});
 		},
 		setShellTitle: function () {
 			this.getService("ShellUIService").then( // promise is returned
@@ -218,9 +286,19 @@ sap.ui.define([
 			);
 		},
 		updateURL: function (CompanyID, FacilityID, CompanyURLParameterName, FacilityURLParameterName, URL) {
+			var iframe = $("#legacyViewer");
+			var currentURL = iframe.attr("src");
+			//For VIN Management URLs
+			if (currentURL) {
+				if (currentURL.search("vinmanagement") > -1) {
+					this.updateIframeWithVINUrl(null);
+					return;
+				}
+			}
+
 			//SAPUI5 already has https://github.com/medialize/URI.js in it. So using this library to change URL parameters
 			if (!URL) {
-				var iframeUrl = new URI($("#legacyViewer").attr("src"));
+				var iframeUrl = new URI(currentURL);
 			} else {
 				iframeUrl = new URI(URL);
 			}
@@ -228,27 +306,35 @@ sap.ui.define([
 			if (CompanyURLParameterName) {
 				iframeUrl.setQuery(CompanyURLParameterName, CompanyID);
 			}
-			if (FacilityURLParameterName) {
+			if (FacilityURLParameterName && FacilityID) {
 				iframeUrl.setQuery(FacilityURLParameterName, FacilityID);
 			}
 
+			// Loading indicator for iframe
+			iframe.addClass("loadingIframe");
+
 			//Set the URL back to iframe
-			$("#legacyViewer").attr("src", iframeUrl);
+			iframe.attr("src", iframeUrl);
+
+			iframe.on("load", function () {
+				iframe.removeClass("loadingIframe");
+			});
 		},
-		updateModel: function (CompanyID, FacilityID) {
+		updateModel: function (CompanyID, FacilityID, showFacility) {
 			this.localModel.setData({
 				selectedCompanyKey: CompanyID,
-				selectedFacilityKey: FacilityID
+				selectedFacilityKey: FacilityID,
+				showFacility: showFacility
 			});
-			//Store locally
-			jQuery.sap.storage.Storage.put("DefaultCompanyID", CompanyID);
-			jQuery.sap.storage.Storage.put("DefaultFacilityID", FacilityID);
 		},
 		updateContext: function (evt) {
 			var CompanyID = sap.ui.getCore().byId("companyComboBoxID").getSelectedItem().getBindingContext("CompanyContext").getObject().SearchTerm1;
 			var SAPCompanyID = sap.ui.getCore().byId("companyComboBoxID").getSelectedItem().getBindingContext("CompanyContext").getObject().CompanyID;
-			var FacilityID = sap.ui.getCore().byId("facilityComboBoxID").getSelectedItem().getBindingContext("CompanyContext").getObject().CMFLocationID;
-			var SAPFacilityID = sap.ui.getCore().byId("facilityComboBoxID").getSelectedItem().getBindingContext("CompanyContext").getObject().FacilityID;
+			try {
+				var FacilityID = sap.ui.getCore().byId("facilityComboBoxID").getSelectedItem().getBindingContext("CompanyContext").getObject().CMFLocationID;
+				var SAPFacilityID = sap.ui.getCore().byId("facilityComboBoxID").getSelectedItem().getBindingContext("CompanyContext").getObject().FacilityID;
+			} catch (err) { //For apps which just have company, no facility will have errors in above try block
+			}
 
 			//Get Legacy IDs
 			this.getLegacyValues({
@@ -260,28 +346,13 @@ sap.ui.define([
 				this.updateURL(data.CompanyID, data.FacilityID, this.oLegacyAppDetail.CompanyURLParameterName, this.oLegacyAppDetail
 					.FacilityURLParameterName, null);
 			}.bind(this));
-			// this.updateURL(CompanyID, FacilityID, this.oLegacyAppDetail.CompanyURLParameterName, this.oLegacyAppDetail
-			// 	.FacilityURLParameterName, null);			
 		},
 		filterFacilities: function () {
-				var facilityComboBox = sap.ui.getCore().byId("facilityComboBoxID");
-				facilityComboBox.bindElement({
-					path: "/Companies('" + this.getModel("localData").getProperty("/selectedCompanyKey") + "')",
-					model: "CompanyContext"
-				});
-			}
-			// updateContext: function (evt) {
-			// 	//Legacy app context needs to be updated
-			// 	//SAPUI5 already has https://github.com/medialize/URI.js in it. So using this library to change URL parameters
-			// 	var iframeUrl = $("#legacyViewer").attr("src");
-			// 	var localModel = this.getModel("localData");
-			// 	var currentCompany = localModel.getProperty("/selectedCompanyKey");
-			// 	var currentFacility = localModel.getProperty("/selectedFacilityKey");
-			// 	iframeUrl.setQuery("company", currentCompany);
-			// 	iframeUrl.setQuery("facility", currentFacility);
-
-		// 	//Set the URL back to iframe
-		// 	$("#legacyViewer").attr("src", iframeUrl);
-		// }
+			var facilityComboBox = sap.ui.getCore().byId("facilityComboBoxID");
+			facilityComboBox.bindElement({
+				path: "/Companies('" + this.getModel("localData").getProperty("/selectedCompanyKey") + "')",
+				model: "CompanyContext"
+			});
+		}
 	});
 });

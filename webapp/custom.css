@@ -27,8 +27,9 @@
     vertical-align: middle;
 }
 
-iframe {
+/*Loading indicator for iframe*/
+.loadingIframe {
     background-image: url("images/AjaxLoader.gif");
     background-repeat: no-repeat;
-    background-position: top;
+    background-position: center;
 }
