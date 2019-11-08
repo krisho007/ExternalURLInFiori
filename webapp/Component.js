@@ -43,7 +43,7 @@ sap.ui.define([
 		metadataFailed: function (modelName) {
 			var myODataModel = this.getModel(modelName); // from the descriptor
 			var failedAlready = myODataModel.isMetadataLoadingFailed();
-			return failedAlready ? Promise.resolve() : new Promise(resolve => {
+			return failedAlready ? Promise.resolve() : new Promise(function (resolve) {
 				myODataModel.attachEventOnce("metadataFailed", resolve);
 			});
 		},
@@ -84,6 +84,18 @@ sap.ui.define([
 						content: [new ToolbarSpacer(), headerContent]
 					});
 					this.setCustomHeader(headerToolbar);
+					
+					//Comboboxes cannot be typed in
+					sap.ui.getCore().byId("companyComboBoxID").addEventDelegate({
+						onAfterRendering: function () {
+							sap.ui.getCore().byId("companyComboBoxID").$().find("input").attr("readonly", true);
+						}
+					});
+					sap.ui.getCore().byId("facilityComboBoxID").addEventDelegate({
+						onAfterRendering: function () {
+							sap.ui.getCore().byId("facilityComboBoxID").$().find("input").attr("readonly", true);
+						}
+					});
 				}.bind(oPage));
 			}
 			return new App({
@@ -158,7 +170,7 @@ sap.ui.define([
 			var currentUser = sap.ushell.Container.getUser().getId();
 			if (defaultCompanyID && defaultCompanyID !== "" && currentUser === defaultSettingsForUser) {
 				//If facility id is not available, this is a intermodal user which does not need facility. Hide facility
-				if (!defaultFacilityID){
+				if (!defaultFacilityID) {
 					this.getModel("localData").setProperty("/showFacility", false);
 				}
 				return { //Company context was already fetched
@@ -178,7 +190,7 @@ sap.ui.define([
 							if (!oData.CompanySearchTerm1) {
 								reject("Technical error: Failed to fetch the default company context from CRM");
 							}
-							if (!oData.CMFLocationID){
+							if (!oData.CMFLocationID) {
 								//If facility id is not available, this is a intermodal user which does not need facility. Hide facility
 								this.getModel("localData").setProperty("/showFacility", false);
 							}
@@ -195,19 +207,19 @@ sap.ui.define([
 			jQuery.sap.storage.Storage.put("DefaultFacilityID", data.FacilityID);
 			jQuery.sap.storage.Storage.put("DefaultSAPCompanyID", this.SAPCompanyID);
 			jQuery.sap.storage.Storage.put("DefaultSAPFacilityID", this.SAPFacilityID);
-			jQuery.sap.storage.Storage.put("CurrentUser", sap.ushell.Container.getUser().getId());			
+			jQuery.sap.storage.Storage.put("CurrentUser", sap.ushell.Container.getUser().getId());
 		},
 		getLegacyValues: function (oData) {
 			return new Promise(
 				function (resolve, reject) {
 					var data = {};
-					
+
 					//URL parameters
 					data["chopCode"] = oData.CompanySearchTerm1;
-					if (oData.CMFLocationID){
+					if (oData.CMFLocationID) {
 						data["cmfFacilityId"] = oData.CMFLocationID;
 					}
-					
+
 					//Call legacy
 					$.ajax({
 							url: "/cpcustomerstation/company/getCompanyFacilitySADBData",
