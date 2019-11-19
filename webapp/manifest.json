@@ -111,6 +111,15 @@
 					"uri": "util.js"
 				}
 			]
+		},
+		"config": {
+			"sapFiori2Adaptation": {
+				"style": true,
+				"collapse": false,
+				"title": true,
+				"back": true,
+				"hierarchy": false
+			}
 		}
 	},
 	"sap.platform.abap": {

@@ -39,6 +39,10 @@ sap.ui.define([
 			this.metadataFailed("LegacyApplicationDetail").then(function (error) {
 				this.handleError(this.resourceBundle.getText("CompanyContextServiceFailed"));
 			}.bind(this));
+			sap.ushell.Container.getRenderer("fiori2").hideHeaderItem("backBtn", false);
+		},
+		exit: function () {
+			sap.ushell.Container.getRenderer("fiori2").showHeaderItem("backBtn", false);
 		},
 		metadataFailed: function (modelName) {
 			var myODataModel = this.getModel(modelName); // from the descriptor
@@ -84,7 +88,7 @@ sap.ui.define([
 						content: [new ToolbarSpacer(), headerContent]
 					});
 					this.setCustomHeader(headerToolbar);
-					
+
 					//Comboboxes cannot be typed in
 					sap.ui.getCore().byId("companyComboBoxID").addEventDelegate({
 						onAfterRendering: function () {
