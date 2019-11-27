@@ -1,11 +1,11 @@
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:l="sap.ui.layout">
 	<l:HorizontalLayout class="sapUiContentPadding legacyViewer">
 		<Label text="Company"/>
-		<ComboBox id="companyComboBoxID" items="{ path: 'CompanyContext>/Companies' }" selectedKey="{localData>/selectedCompanyKey}" selectionChange="filterFacilities">
+		<ComboBox items="{ path: 'CompanyContext>/Companies' }" selectedKey="{localData>/selectedCompanyKey}" selectionChange="filterFacilities">
 			<core:Item key="{CompanyContext>CompanyID}" text="{CompanyContext>CompanyName}"/>
 		</ComboBox>
 		<Label text="Facility" visible="{localData>/showFacility}"/>
-		<ComboBox id="facilityComboBoxID" items="{ path: 'CompanyContext>Facilities' }" selectedKey="{localData>/selectedFacilityKey}" visible="{localData>/showFacility}">
+		<ComboBox items="{ path: 'CompanyContext>Facilities' }" selectedKey="{localData>/selectedFacilityKey}" visible="{localData>/showFacility}">
 			<core:Item key="{CompanyContext>FacilityID}" text="{CompanyContext>FacilityName}"/>
 		</ComboBox>
 		<Button text="Go" press="updateContext" type="Accept"/>

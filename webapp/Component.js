@@ -39,10 +39,11 @@ sap.ui.define([
 			this.metadataFailed("LegacyApplicationDetail").then(function (error) {
 				this.handleError(this.resourceBundle.getText("CompanyContextServiceFailed"));
 			}.bind(this));
-			sap.ushell.Container.getRenderer("fiori2").hideHeaderItem("backBtn", false);
+			sap.ushell.Container.getRenderer("fiori2").hideHeaderItem("backBtn", false, ["app"]);
 		},
 		exit: function () {
-			sap.ushell.Container.getRenderer("fiori2").showHeaderItem("backBtn", false);
+			sap.ushell.Container.getRenderer("fiori2").showHeaderItem("backBtn", false, ["app"]);
+			this.getRootControl().destroy();
 		},
 		metadataFailed: function (modelName) {
 			var myODataModel = this.getModel(modelName); // from the descriptor
@@ -90,16 +91,19 @@ sap.ui.define([
 					this.setCustomHeader(headerToolbar);
 
 					//Comboboxes cannot be typed in
-					sap.ui.getCore().byId("companyComboBoxID").addEventDelegate({
+					this.comboBoxCompany = headerContent.getContent()[1];
+					this.comboBocFacility = headerContent.getContent()[3];
+					this.comboBoxCompany.addEventDelegate({
 						onAfterRendering: function () {
-							sap.ui.getCore().byId("companyComboBoxID").$().find("input").attr("readonly", true);
-						}
+							this.$().find("input").attr("readonly", true);
+						}.bind(this.comboBoxCompany)
 					});
-					sap.ui.getCore().byId("facilityComboBoxID").addEventDelegate({
+					this.comboBocFacility.addEventDelegate({
 						onAfterRendering: function () {
-							sap.ui.getCore().byId("facilityComboBoxID").$().find("input").attr("readonly", true);
-						}
+							this.$().find("input").attr("readonly", true);
+						}.bind(this.comboBocFacility)
 					});
+					
 				}.bind(oPage));
 			}
 			return new App({
@@ -131,14 +135,13 @@ sap.ui.define([
 				}),
 				afterClose: function () {
 					dialog.destroy();
-					//Navigate to FLP - NOT WORKING
-					// var oCrossAppNav = sap.ushell.Container.getService("CrossApplicationNavigation");
-					// oCrossAppNav.hrefForExternal({
-					// 	target: {
-					// 		shellHash: "#"
-					// 	}
-					// });
-					location.hash = "#Shell-home";
+					//Navigate to FLP
+					var oCrossAppNav = sap.ushell.Container.getService("CrossApplicationNavigation");
+					oCrossAppNav.toExternal({
+						target: {
+							shellHash: "#"
+						}
+					});
 				}
 			});
 			dialog.open();
@@ -344,11 +347,13 @@ sap.ui.define([
 			});
 		},
 		updateContext: function (evt) {
-			var CompanyID = sap.ui.getCore().byId("companyComboBoxID").getSelectedItem().getBindingContext("CompanyContext").getObject().SearchTerm1;
-			var SAPCompanyID = sap.ui.getCore().byId("companyComboBoxID").getSelectedItem().getBindingContext("CompanyContext").getObject().CompanyID;
+			this.comboBoxCompany = this.getRootControl().getCurrentPage().getCustomHeader().getContent()[1].getContent()[3];
+			var CompanyID = this.comboBoxCompany.getSelectedItem().getBindingContext("CompanyContext").getObject().SearchTerm1;
+			var SAPCompanyID = this.comboBoxCompany.getSelectedItem().getBindingContext("CompanyContext").getObject().CompanyID;
 			try {
-				var FacilityID = sap.ui.getCore().byId("facilityComboBoxID").getSelectedItem().getBindingContext("CompanyContext").getObject().CMFLocationID;
-				var SAPFacilityID = sap.ui.getCore().byId("facilityComboBoxID").getSelectedItem().getBindingContext("CompanyContext").getObject().FacilityID;
+				this.comboBocFacility = this.getRootControl().getCurrentPage().getCustomHeader().getContent()[1].getContent()[3];
+				var FacilityID = this.comboBocFacility.getSelectedItem().getBindingContext("CompanyContext").getObject().CMFLocationID;
+				var SAPFacilityID = this.comboBocFacility.getSelectedItem().getBindingContext("CompanyContext").getObject().FacilityID;
 			} catch (err) { //For apps which just have company, no facility will have errors in above try block
 			}
 
@@ -364,7 +369,8 @@ sap.ui.define([
 			}.bind(this));
 		},
 		filterFacilities: function () {
-			var facilityComboBox = sap.ui.getCore().byId("facilityComboBoxID");
+			// var facilityComboBox = sap.ui.getCore().byId("facilityComboBoxID");
+			var facilityComboBox = this.getRootControl().getCurrentPage().getCustomHeader().getContent()[1].getContent()[3];
 			facilityComboBox.bindElement({
 				path: "/Companies('" + this.getModel("localData").getProperty("/selectedCompanyKey") + "')",
 				model: "CompanyContext"
