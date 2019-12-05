@@ -40,10 +40,23 @@ sap.ui.define([
 				this.handleError(this.resourceBundle.getText("CompanyContextServiceFailed"));
 			}.bind(this));
 			sap.ushell.Container.getRenderer("fiori2").hideHeaderItem("backBtn", false, ["app"]);
+
+			// //Whenever iframe thinks suitable, it sends a message asking to navigate to FLP
+			// window.addEventListener("message", this.goHome, false);
+		},
+		goHome: function () {
+			//Navigate to FLP
+			var oCrossAppNav = sap.ushell.Container.getService("CrossApplicationNavigation");
+			oCrossAppNav.toExternal({
+				target: {
+					shellHash: "#"
+				}
+			});
 		},
 		exit: function () {
 			sap.ushell.Container.getRenderer("fiori2").showHeaderItem("backBtn", false, ["app"]);
 			this.getRootControl().destroy();
+			window.removeEventListener("message", this.goHome, false);
 		},
 		metadataFailed: function (modelName) {
 			var myODataModel = this.getModel(modelName); // from the descriptor
@@ -103,7 +116,7 @@ sap.ui.define([
 							this.$().find("input").attr("readonly", true);
 						}.bind(this.comboBocFacility)
 					});
-					
+
 				}.bind(oPage));
 			}
 			return new App({
@@ -333,7 +346,7 @@ sap.ui.define([
 			iframe.addClass("loadingIframe");
 
 			//Set the URL back to iframe
-			iframe.attr("src", iframeUrl);
+			iframe.attr("src", iframeUrl.href());
 
 			iframe.on("load", function () {
 				iframe.removeClass("loadingIframe");
@@ -347,7 +360,7 @@ sap.ui.define([
 			});
 		},
 		updateContext: function (evt) {
-			this.comboBoxCompany = this.getRootControl().getCurrentPage().getCustomHeader().getContent()[1].getContent()[3];
+			this.comboBoxCompany = this.getRootControl().getCurrentPage().getCustomHeader().getContent()[1].getContent()[1];
 			var CompanyID = this.comboBoxCompany.getSelectedItem().getBindingContext("CompanyContext").getObject().SearchTerm1;
 			var SAPCompanyID = this.comboBoxCompany.getSelectedItem().getBindingContext("CompanyContext").getObject().CompanyID;
 			try {
