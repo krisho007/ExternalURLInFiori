@@ -41,8 +41,6 @@ sap.ui.define([
 			}.bind(this));
 			sap.ushell.Container.getRenderer("fiori2").hideHeaderItem("backBtn", false, ["app"]);
 
-			// //Whenever iframe thinks suitable, it sends a message asking to navigate to FLP
-			// window.addEventListener("message", this.goHome, false);
 		},
 		goHome: function () {
 			//Navigate to FLP
@@ -69,6 +67,7 @@ sap.ui.define([
 			//SAPUI5 already has https://github.com/medialize/URI.js in it. So using this library to read URL parameters
 			var currentURI = new URI(location.hash.substr(1));
 			this.hasCompanyContext = (currentURI.query(true)["HasCompanyContext"] === "true");
+			this.sendUsersCurrentCompany = (currentURI.query(true)["SendUsersCurrentCompany"] === "true");
 
 			//Custom iFrame rendering control
 			Control.extend("convergent.iframe", {
@@ -81,7 +80,6 @@ sap.ui.define([
 					events: {}
 				},
 				renderer: function (oRm, oControl) {
-					// oRm.write('<iframe sandbox="allow-same-origin allow-scripts allow-popups allow-forms" id="legacyViewer" frameBorder="0" ></iframe>');
 					oRm.write('<iframe id="legacyViewer" frameBorder="0" ></iframe>');
 				}
 			});
@@ -116,7 +114,6 @@ sap.ui.define([
 							this.$().find("input").attr("readonly", true);
 						}.bind(this.comboBocFacility)
 					});
-
 				}.bind(oPage));
 			}
 			return new App({
@@ -178,8 +175,11 @@ sap.ui.define([
 				}.bind(this));
 		},
 		readDefaultData: function () {
-			this.hasCompanyContext = (this.getComponentData().startupParameters.HasCompanyContext[0] === "true");
-			if (!this.hasCompanyContext) {
+			var currentURI = new URI(location.hash.substr(1));
+			this.hasCompanyContext = (currentURI.query(true)["HasCompanyContext"] === "true");
+			this.sendUsersCurrentCompany = (currentURI.query(true)["SendUsersCurrentCompany"] === "true");
+			// this.hasCompanyContext = (this.getComponentData().startupParameters.HasCompanyContext[0] === "true");
+			if (!this.hasCompanyContext && !this.sendUsersCurrentCompany) {
 				return false; //No company context to handle
 			}
 			var defaultCompanyID = jQuery.sap.storage.Storage.get("DefaultCompanyID");
@@ -188,6 +188,8 @@ sap.ui.define([
 			var defaultSAPFacilityID = jQuery.sap.storage.Storage.get("DefaultSAPFacilityID");
 			var defaultSettingsForUser = jQuery.sap.storage.Storage.get("CurrentUser");
 			var currentUser = sap.ushell.Container.getUser().getId();
+			var usersCompanyID = jQuery.sap.storage.Storage.get("UsersCompanyID");
+
 			if (defaultCompanyID && defaultCompanyID !== "" && currentUser === defaultSettingsForUser) {
 				//If facility id is not available, this is a intermodal user which does not need facility. Hide facility
 				if (!defaultFacilityID) {
@@ -197,7 +199,8 @@ sap.ui.define([
 					"CompanyID": defaultCompanyID,
 					"FacilityID": defaultFacilityID,
 					"SAPCompanyID": defaultSAPCompanyID,
-					"SAPFacilityID": defaultSAPFacilityID
+					"SAPFacilityID": defaultSAPFacilityID,
+					"UsersCompanyID": usersCompanyID
 				};
 			}
 			return this.getCRMDefaults();
@@ -222,15 +225,28 @@ sap.ui.define([
 					});
 				}.bind(this));
 		},
-		updateLocalData: function (data) {
+		updateLocalData: function (values) {
+			var data = values[0];
+			var usersData = values[1];
 			jQuery.sap.storage.Storage.put("DefaultCompanyID", data.CompanyID);
 			jQuery.sap.storage.Storage.put("DefaultFacilityID", data.FacilityID);
-			jQuery.sap.storage.Storage.put("DefaultSAPCompanyID", this.SAPCompanyID);
-			jQuery.sap.storage.Storage.put("DefaultSAPFacilityID", this.SAPFacilityID);
+			jQuery.sap.storage.Storage.put("DefaultSAPCompanyID", data.SAPCompanyID);
+			jQuery.sap.storage.Storage.put("DefaultSAPFacilityID", data.SAPFacilityID);
 			jQuery.sap.storage.Storage.put("CurrentUser", sap.ushell.Container.getUser().getId());
+			jQuery.sap.storage.Storage.put("UsersCompanyID", usersData.UsersCompanyID);
+			jQuery.sap.storage.Storage.put("UsersSAPCompanyID", data.UsersSAPCompanyID);
+
+			//For promise
+			return { //Company context was already fetched
+				"CompanyID": data.CompanyID,
+				"FacilityID": data.FacilityID,
+				"SAPCompanyID": data.SAPCompanyID,
+				"SAPFacilityID": data.SAPFacilityID,
+				"UsersCompanyID": usersData.UsersCompanyID
+			};
 		},
-		getLegacyValues: function (oData) {
-			return new Promise(
+		getLegacyValues: function (oData, doNotFetchUserData) {
+			var mainPromise = new Promise(
 				function (resolve, reject) {
 					var data = {};
 
@@ -251,13 +267,43 @@ sap.ui.define([
 								"CompanyID": data.company.id,
 								"FacilityID": (data.facility === null ? null : data.facility.id),
 								"SAPCompanyID": this.CompanyID,
-								"SAPFacilityID": this.FacilityID
+								"SAPFacilityID": this.FacilityID,
+								"UsersSAPCompanyID": this.EmployeeCompanyID
 							});
 						}.bind(oData))
 						.fail(function (error) {
 							reject("Technical error: Failed to fetch the legacy company context from CS");
 						});
 				});
+
+			if (doNotFetchUserData) {
+				return mainPromise;
+			}
+			//Some of the apps like MapView need to be set User's company ID. (Not the default company set by the user)
+			var usersDataPromise = new Promise(
+				function (resolve, reject) {
+					var data = {};
+
+					//URL parameters
+					data["chopCode"] = oData.EmployeeCompanySearchTerm1;
+
+					//Call legacy
+					$.ajax({
+							url: "/cpcustomerstation/company/getCompanyFacilitySADBData",
+							method: "GET",
+							data: data
+						})
+						.done(function (usersData) {
+							resolve({
+								"UsersCompanyID": usersData.company.id
+							});
+						}.bind(oData))
+						.fail(function (error) {
+							reject("Technical error: Failed to fetch the legacy company context from CS");
+						});
+				});
+
+			return Promise.all([mainPromise, usersDataPromise]);
 		},
 		updateIframe: function (values) {
 			this.oDefaultData = values[0];
@@ -273,6 +319,9 @@ sap.ui.define([
 			if (this.hasCompanyContext) {
 				this.updateModel(this.oDefaultData.SAPCompanyID, this.oDefaultData.SAPFacilityID, showFacility);
 				this.filterFacilities();
+			}
+			if (this.sendUsersCurrentCompany) {
+				this.updateModel(this.oDefaultData.SAPCompanyID, null, false);
 			}
 			this.updateURL(this.oDefaultData.CompanyID, this.oDefaultData.FacilityID,
 				this.oLegacyAppDetail.CompanyURLParameterName, this.oLegacyAppDetail.FacilityURLParameterName,
@@ -376,7 +425,7 @@ sap.ui.define([
 				CMFLocationID: FacilityID,
 				CompanyID: SAPCompanyID,
 				FacilityID: SAPFacilityID
-			}).then(function (data) {
+			}, true).then(function (data) {
 				this.updateURL(data.CompanyID, data.FacilityID, this.oLegacyAppDetail.CompanyURLParameterName, this.oLegacyAppDetail
 					.FacilityURLParameterName, null);
 			}.bind(this));
